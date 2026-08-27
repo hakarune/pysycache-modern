@@ -117,10 +117,14 @@ Install it with `sudo apt install ./build/deb/out/pysycache-modern_*.deb`.
 
 ### Releases
 
-Pushing a `v*` tag (e.g. `git tag v0.1.0 && git push --tags`) runs
-`.github/workflows/release.yml`, which builds the wheel + sdist and the `.deb`
-and publishes them on a GitHub Release with generated notes. Keep the tag in
-step with `version` in `pyproject.toml`.
+`.github/workflows/release.yml` builds the wheel + sdist, the standalone `.deb`,
+and a zip of the web version, and publishes them on a GitHub Release:
+
+- **every push to `main`** refreshes a rolling **`rolling`** pre-release
+  (marked *pre-release*, version `X.Y.Z~alpha<n>.<sha>`) — treat it as alpha.
+- **pushing a `v*` tag** (e.g. `git tag v0.1.0 && git push --tags`) cuts a
+  stable release named after the tag, with generated notes. Keep the tag in
+  step with `version` in `pyproject.toml`.
 
 ### Tests
 

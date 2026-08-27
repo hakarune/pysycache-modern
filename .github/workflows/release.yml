@@ -1,28 +1,69 @@
 name: Release
 
-# On a v* tag (or a manual run against an existing tag) build the
-# distributables and attach them to a GitHub Release:
-#   - wheel + sdist            (python -m build)
-#   - standalone .deb           (build-deb.sh)
-#   - web version zip           (web/tools/build.mjs + zip of web/)
+# Two channels, one pipeline:
+#   * push to main            -> rolling PRE-RELEASE "rolling" (alpha), assets
+#                                rebuilt and replaced every commit
+#   * push a v* tag           -> stable release named after the tag
+#   * workflow_dispatch       -> same as a tag build (give the tag as input)
+#
+# Assets on every release: wheel + sdist, the standalone .deb, and the web zip.
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to release (e.g. v0.1.0)"
+        description: "Existing v* tag to (re)build a stable release for"
         required: true
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.m.outputs.channel }}
+      tag: ${{ steps.m.outputs.tag }}
+      version: ${{ steps.m.outputs.version }}
+      prerelease: ${{ steps.m.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: m
+        run: |
+          base=$(grep -m1 '^version' pyproject.toml | sed 's/.*"\(.*\)".*/\1/')
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ref="${{ github.event.inputs.tag }}"
+          else
+            ref="${{ github.ref_name }}"
+          fi
+          if [ "${{ github.ref_type }}" = "tag" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "channel=stable"        >> "$GITHUB_OUTPUT"
+            echo "tag=${ref}"            >> "$GITHUB_OUTPUT"
+            echo "version=${ref#v}"      >> "$GITHUB_OUTPUT"
+            echo "prerelease=false"      >> "$GITHUB_OUTPUT"
+          else
+            echo "channel=rolling"       >> "$GITHUB_OUTPUT"
+            echo "tag=rolling"           >> "$GITHUB_OUTPUT"
+            echo "version=${base}~alpha$(git rev-list --count HEAD).$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true"       >> "$GITHUB_OUTPUT"
+          fi
+
   python-dist:
+    needs: meta
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -34,22 +75,28 @@ jobs:
           path: dist/*
 
   deb:
+    needs: meta
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: bash build-deb.sh
+      - run: bash build-deb.sh "${{ needs.meta.outputs.version }}"
       - uses: actions/upload-artifact@v4
         with:
           name: deb
           path: build/deb/out/*.deb
 
   web:
+    needs: meta
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -57,25 +104,48 @@ jobs:
       - run: node web/tools/build.mjs           # populate web/assets/
       - name: Zip web/
         run: |
-          v="${{ github.event.inputs.tag || github.ref_name }}"
-          (cd web && zip -rq "$GITHUB_WORKSPACE/pysycache-modern-web-${v}.zip" . -x 'tools/*' 'README.md')
+          (cd web && zip -rq "$GITHUB_WORKSPACE/pysycache-modern-web-${{ needs.meta.outputs.version }}.zip" . -x 'tools/*' 'README.md')
       - uses: actions/upload-artifact@v4
         with:
           name: web
           path: pysycache-modern-web-*.zip
 
   publish:
-    needs: [python-dist, deb, web]
+    needs: [meta, python-dist, deb, web]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Reset the rolling pre-release
+        if: needs.meta.outputs.channel == 'rolling'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete rolling --yes || true
+          git push origin :refs/tags/rolling || true
+          git tag -f rolling
+          git push -f origin rolling
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
       - run: ls -R artifacts
+
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          generate_release_notes: true
+          tag_name: ${{ needs.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ needs.meta.outputs.prerelease }}
+          name: >-
+            ${{ needs.meta.outputs.channel == 'rolling'
+                && 'Rolling build (alpha)'
+                || needs.meta.outputs.tag }}
+          body: >-
+            ${{ needs.meta.outputs.channel == 'rolling'
+                && format('Automatic alpha build from `main` ({0}). Rebuilt on every commit — treat as unstable. Version `{1}`.', github.sha, needs.meta.outputs.version)
+                || '' }}
+          generate_release_notes: ${{ needs.meta.outputs.channel == 'stable' }}
+          make_latest: ${{ needs.meta.outputs.channel == 'stable' }}
           fail_on_unmatched_files: false
           files: artifacts/**/*
