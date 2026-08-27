@@ -4,8 +4,9 @@ name: Android APK (Buildozer)
 # Trigger it by hand from the Actions tab. Tagged releases build their own APK
 # via release.yml, so this is only for testing between releases.
 #
-# A cold build takes ~30 min. This job never touches the desktop run, the
-# wheel, or the .deb.
+# A cold build takes ~30-40 min (Buildozer downloads the Android SDK/NDK on
+# first run; ~/.buildozer is cached between runs). This job never touches the
+# desktop run, the wheel, or the .deb.
 
 on:
   workflow_dispatch:
@@ -20,11 +21,28 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build debug APK
-        uses: ArtemSBulgakov/buildozer-action@v1
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            openjdk-17-jdk build-essential ccache git zip unzip \
+            autoconf automake libtool pkg-config cmake \
+            zlib1g-dev libncurses-dev libffi-dev libssl-dev libltdl-dev
+
+      - name: Install Buildozer
+        run: pip install --upgrade buildozer cython
+
+      - name: Cache Buildozer global dir
+        uses: actions/cache@v4
         with:
-          command: buildozer android debug
-          buildozer_version: stable
+          path: ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-
+
+      - name: Build debug APK
+        run: buildozer android debug
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
 
       - uses: actions/upload-artifact@v4
         with:

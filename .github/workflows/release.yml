@@ -55,7 +55,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pygbag
-      - run: python -m pygbag --build --archive main.py
+      - run: python -m pygbag --build --disable-sound-format-error main.py
       - name: Zip the web build
         run: |
           cd build/web
@@ -73,10 +73,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: ArtemSBulgakov/buildozer-action@v1
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            openjdk-17-jdk build-essential ccache git zip unzip \
+            autoconf automake libtool pkg-config cmake \
+            zlib1g-dev libncurses-dev libffi-dev libssl-dev libltdl-dev
+      - run: pip install --upgrade buildozer cython
+      - uses: actions/cache@v4
         with:
-          command: buildozer android debug
-          buildozer_version: stable
+          path: ~/.buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-
+      - run: buildozer android debug
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       - uses: actions/upload-artifact@v4
         with:
           name: apk

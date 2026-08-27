@@ -35,7 +35,9 @@ jobs:
         run: pip install pygbag
 
       - name: Build (writes build/web)
-        run: python -m pygbag --build --archive main.py
+        # Legacy PySyCache ships .wav sound effects; browsers play them fine, so
+        # tell pygbag not to hard-fail on the format.
+        run: python -m pygbag --build --disable-sound-format-error main.py
 
       - uses: actions/upload-pages-artifact@v3
         with:
