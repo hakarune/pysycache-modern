@@ -1,17 +1,14 @@
 name: Android APK (Buildozer)
 
-# Packages the game into a debug .apk with Buildozer / python-for-android and
-# uploads it as a workflow artifact you can download and sideload.
+# Ad-hoc debug .apk build, uploaded as a workflow artifact.
+# Trigger it by hand from the Actions tab. Tagged releases build their own APK
+# via release.yml, so this is only for testing between releases.
 #
-# Not run on every push (a cold build takes ~30 min): trigger it by hand from
-# the Actions tab, or by pushing a v* tag.
-#
-# This job never touches the desktop run, the wheel, or the .deb.
+# A cold build takes ~30 min. This job never touches the desktop run, the
+# wheel, or the .deb.
 
 on:
   workflow_dispatch:
-  push:
-    tags: ["v*"]
 
 jobs:
   apk:

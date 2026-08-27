@@ -61,11 +61,14 @@ class Engine:
         self.fps = fps
         self.clock = pygame.time.Clock()
 
-        # The logical draw target.  Scenes never touch the real display surface.
-        self.surface = pygame.Surface(VIRTUAL_SIZE).convert()
-
+        # Open the real window first: Surface.convert() needs a live display mode
+        # (the headless "dummy" SDL driver enforces this; some real drivers are
+        # more forgiving).
         self._fullscreen = fullscreen
         self._window = self._create_window(fullscreen)
+
+        # The logical draw target.  Scenes never touch the real display surface.
+        self.surface = pygame.Surface(VIRTUAL_SIZE).convert()
 
         # Blit rectangle of the scaled virtual surface inside the real window.
         self._blit_rect = pygame.Rect(0, 0, *VIRTUAL_SIZE)

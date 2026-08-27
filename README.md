@@ -143,11 +143,19 @@ buildozer android debug            # writes bin/*.apk
 
 `.github/workflows/android.yml` produces a downloadable debug-APK artifact; it
 is **not** run on every push (a cold build is ~30 min) — start it from the
-Actions tab or by pushing a `v*` tag.
+Actions tab.
 
 The web and Android builds are entirely separate from the wheel and the `.deb`:
 `build-deb.sh` only packages `src/`, `assets/`, `pyproject.toml`, `README.md`
 and `LICENSE`.
+
+### Releases
+
+Pushing a `v*` tag (e.g. `git tag v0.1.0 && git push --tags`) runs
+`.github/workflows/release.yml`, which builds the wheel + sdist, the `.deb`, a
+zipped web build and a best-effort debug APK, then publishes them all on a
+GitHub Release with generated notes. Keep the tag in step with `version` in
+`pyproject.toml` and `buildozer.spec`.
 
 ### Tests
 
@@ -180,7 +188,7 @@ tests/test_smoke.py      headless engine + activity smoke test
 main.py                  root entry point for the pygbag (web) and Buildozer (APK) builds
 build-deb.sh             standalone .deb builder (packages src/ + assets/ only)
 buildozer.spec           Android APK config (Buildozer / python-for-android)
-.github/workflows/       ci.yml (smoke test), web.yml (pygbag → Pages), android.yml (APK)
+.github/workflows/       ci.yml (smoke test) · web.yml (pygbag → Pages) · android.yml (APK) · release.yml (tag → GitHub Release)
 pyproject.toml           packaging + dependencies
 LICENSE                  GPL-2.0
 ```

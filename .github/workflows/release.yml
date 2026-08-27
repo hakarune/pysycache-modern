@@ -1,0 +1,100 @@
+name: Release
+
+# On a v* tag (or a manual run against an existing tag) build every
+# distributable and attach them to a GitHub Release:
+#   - wheel + sdist        (python -m build)
+#   - standalone .deb       (build-deb.sh)
+#   - web build zip         (pygbag)
+#   - debug Android .apk     (Buildozer; best-effort, never blocks the release)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  python-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+
+  deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: ./build-deb.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: build/deb/out/*.deb
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pygbag
+      - run: python -m pygbag --build --archive main.py
+      - name: Zip the web build
+        run: |
+          cd build/web
+          zip -r "$GITHUB_WORKSPACE/pysycache-modern-web.zip" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: pysycache-modern-web.zip
+
+  apk:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android debug
+          buildozer_version: stable
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: bin/*.apk
+
+  publish:
+    needs: [python-dist, deb, web, apk]
+    if: always() && needs.python-dist.result == 'success' && needs.deb.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - run: ls -R artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: artifacts/**/*
