@@ -188,10 +188,42 @@ async def async_main(argv: list[str] | None = None) -> int:
         sound=not args.no_sound,
     )
     try:
-        await Menu(engine, level=LEVELS[args.level]).run()
+        await _run_menu(engine, LEVELS[args.level])
     finally:
         engine.quit()
     return 0
+
+
+async def _run_menu(engine: Engine, level: int) -> None:
+    """Build and run the menu, painting any startup failure onto the screen.
+
+    On the desktop a crash just prints a traceback; in the browser it would be a
+    silent blank canvas, so draw the error where it can be read.
+    """
+    try:
+        await Menu(engine, level=level).run()
+    except Exception as exc:  # last-resort visible error reporter
+        import traceback
+
+        tb = traceback.format_exc()
+        print(tb)
+        try:
+            surface = engine.surface
+            surface.fill((120, 0, 0))
+            font = engine.font(18)
+            y = 20
+            for line in (f"{type(exc).__name__}: {exc}".splitlines()
+                         + ["", *tb.splitlines()[-12:]]):
+                surface.blit(font.render(line[:96], True, (255, 255, 255)), (16, y))
+                y += 22
+            for _ in range(240):
+                engine.get_events()
+                engine.present()
+                engine.tick()
+                await asyncio.sleep(0)
+        except Exception:
+            pass
+        raise
 
 
 def main(argv: list[str] | None = None) -> int:

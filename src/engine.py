@@ -96,11 +96,12 @@ class Engine:
     # ------------------------------------------------------------------
     def _create_window(self, fullscreen: bool) -> pygame.Surface:
         if IS_WEB:
-            # In the browser the canvas is a fixed size (pygbag's framebuffer,
-            # e.g. 1280x720).  Let SDL scale our 800x600 logical surface onto it
-            # and map the mouse back for us -- do NOT do our own letter-boxing,
-            # pygbag's wasm SDL can't blit into a scaled subsurface.
-            return pygame.display.set_mode(VIRTUAL_SIZE, pygame.SCALED)
+            # In the browser: plain 800x600 surface, no flags.  pygbag's HTML
+            # canvas scales itself to the viewport via CSS, and mouse events
+            # already arrive in this coordinate space.  SCALED / RESIZABLE both
+            # misbehave under pygbag's wasm SDL, so don't use them and don't do
+            # our own letter-boxing (see _recompute_layout / present).
+            return pygame.display.set_mode(VIRTUAL_SIZE)
         if fullscreen:
             return pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.SCALED)
         return pygame.display.set_mode(VIRTUAL_SIZE, pygame.RESIZABLE)
@@ -115,7 +116,7 @@ class Engine:
 
     def toggle_fullscreen(self) -> None:
         if IS_WEB:
-            return  # the browser owns the canvas; SCALED already fills it
+            return  # the browser owns the canvas size
         self._fullscreen = not self._fullscreen
         self._window = self._create_window(self._fullscreen)
         self._recompute_layout()
@@ -123,7 +124,7 @@ class Engine:
     def _recompute_layout(self) -> None:
         """Fit the 800x600 virtual surface into the current window, centred."""
         if IS_WEB:
-            # SDL (via SCALED) presents the whole logical surface; no offset.
+            # The window surface is already 800x600; draw straight onto it.
             self._blit_rect = pygame.Rect(0, 0, *VIRTUAL_SIZE)
             return
         win_w, win_h = self._window.get_size()
