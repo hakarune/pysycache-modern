@@ -80,7 +80,7 @@ jobs:
             openjdk-17-jdk build-essential ccache git zip unzip \
             autoconf automake libtool pkg-config cmake \
             zlib1g-dev libncurses-dev libffi-dev libssl-dev libltdl-dev
-      - run: pip install --upgrade buildozer cython
+      - run: pip install "buildozer==1.5.0" "cython<3.1"
       - uses: actions/cache@v4
         with:
           path: ~/.buildozer

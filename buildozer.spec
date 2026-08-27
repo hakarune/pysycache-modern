@@ -20,10 +20,7 @@ source.exclude_dirs = tests, legacy-sources, build, bin, dist, .buildozer, .gith
 # Keep in step with pyproject.toml / build-deb.sh by hand.
 version = 0.1.0
 
-# Pin BOTH python3 and hostpython3 to 3.11: python-for-android otherwise builds
-# CPython 3.14, which classic pygame fails to compile against (removed
-# longintrepr.h), and a lone python3 pin trips "python3 != hostpython3".
-requirements = hostpython3==3.11.9, python3==3.11.9, pygame
+requirements = python3, pygame
 
 orientation = landscape
 fullscreen = 1
@@ -33,8 +30,18 @@ android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = 1
 android.api = 34
 android.minapi = 24
-android.build_tools_version = 34.0.0
 android.accept_sdk_license = True
+
+# --- toolchain pinned to a known-good combo -------------------------------
+# Current buildozer pulls NDK r27/r28, which neither classic pygame (Python
+# 3.14, removed longintrepr.h) nor CPython 3.11 (grpmodule.c: undeclared
+# setgrent/getgrent) will compile against.  Pin python-for-android to its
+# 2024.01.21 release, which ships matching CPython 3.11 + pygame recipes and
+# NDK r25b.  Pair with buildozer==1.5.0 in the workflows.
+android.ndk = 25b
+android.build_tools_version = 34.0.0
+p4a.fork = kivy
+p4a.branch = 2024.01.21
 
 [buildozer]
 log_level = 2
