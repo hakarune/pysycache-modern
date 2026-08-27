@@ -206,6 +206,12 @@ tar xzf pysycache_3.1.orig.tar.gz -C pysycache-legacy --strip-components=1
 
 `legacy-sources/` is git-ignored; it is only a local reference copy.
 
+The `themes-puzzle/<theme>/{0,1,2}/` sub-folders from upstream (pre-cut jigsaw
+pieces, `*-modele.png`, `.dfg` layout files) are **not** vendored: the Drag
+activity slices pieces from the full source image at runtime, so those files
+were unused. Copy only the full pictures (`*.png`, `*.jpeg`) plus each theme's
+`credits.txt` / `copyright.html`.
+
 ## License
 
 GPL-2.0-or-later, matching the original PySyCache. See [`LICENSE`](LICENSE).
