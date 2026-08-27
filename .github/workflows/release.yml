@@ -1,11 +1,9 @@
 name: Release
 
-# On a v* tag (or a manual run against an existing tag) build every
-# distributable and attach them to a GitHub Release:
-#   - wheel + sdist        (python -m build)
-#   - standalone .deb       (build-deb.sh)
-#   - web build zip         (pygbag)
-#   - debug Android .apk     (Buildozer; best-effort, never blocks the release)
+# On a v* tag (or a manual run against an existing tag) build the
+# distributables and attach them to a GitHub Release:
+#   - wheel + sdist   (python -m build)
+#   - standalone .deb  (build-deb.sh)
 
 on:
   push:
@@ -47,56 +45,8 @@ jobs:
           name: deb
           path: build/deb/out/*.deb
 
-  web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install pygbag
-      - run: python -m pygbag --build --disable-sound-format-error main.py
-      - name: Zip the web build
-        run: |
-          cd build/web
-          zip -r "$GITHUB_WORKSPACE/pysycache-modern-web.zip" .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: web
-          path: pysycache-modern-web.zip
-
-  apk:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: System dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            openjdk-17-jdk build-essential ccache git zip unzip \
-            autoconf automake libtool pkg-config cmake \
-            zlib1g-dev libncurses-dev libffi-dev libssl-dev libltdl-dev
-      - run: pip install "buildozer==1.5.0" "cython<3.1"
-      - uses: actions/cache@v4
-        with:
-          path: ~/.buildozer
-          key: buildozer-${{ hashFiles('buildozer.spec') }}
-          restore-keys: buildozer-
-      - run: yes | buildozer android debug
-        env:
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-      - uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: bin/*.apk
-
   publish:
-    needs: [python-dist, deb, web, apk]
-    if: always() && needs.python-dist.result == 'success' && needs.deb.result == 'success'
+    needs: [python-dist, deb]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

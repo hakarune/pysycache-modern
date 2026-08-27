@@ -33,10 +33,6 @@ dev = [
     "pytest>=7",
     "ruff>=0.4",
 ]
-# Web/WebAssembly build only; unused by the desktop run and the .deb.
-web = [
-    "pygbag>=0.9",
-]
 
 [project.urls]
 "Homepage" = "https://github.com/hakarune/pysycache-modern"

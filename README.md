@@ -115,47 +115,12 @@ Output: `build/deb/out/pysycache-modern_<version>_all.deb`, which installs
 
 Install it with `sudo apt install ./build/deb/out/pysycache-modern_*.deb`.
 
-### Web (WebAssembly) build
-
-The game loop is a coroutine, so [`pygbag`](https://pygame-web.github.io/) can
-compile the whole thing to WebAssembly and run it in a browser — handy for
-trying it on a phone or tablet with no install.
-
-```bash
-pip install -e ".[web]"
-python -m pygbag main.py            # serves http://localhost:8000
-python -m pygbag --build main.py    # just write build/web/
-```
-
-The `.github/workflows/web.yml` action builds this on every push to `main` and
-publishes it to GitHub Pages (enable *Settings → Pages → Source: GitHub
-Actions* once); the playable URL is then `https://<owner>.github.io/<repo>/`.
-
-### Android APK
-
-`buildozer.spec` drives a [Buildozer](https://buildozer.readthedocs.io/) /
-python-for-android packaging run.
-
-```bash
-pip install buildozer
-buildozer android debug            # writes bin/*.apk
-```
-
-`.github/workflows/android.yml` produces a downloadable debug-APK artifact; it
-is **not** run on every push (a cold build is ~30 min) — start it from the
-Actions tab.
-
-The web and Android builds are entirely separate from the wheel and the `.deb`:
-`build-deb.sh` only packages `src/`, `assets/`, `pyproject.toml`, `README.md`
-and `LICENSE`.
-
 ### Releases
 
 Pushing a `v*` tag (e.g. `git tag v0.1.0 && git push --tags`) runs
-`.github/workflows/release.yml`, which builds the wheel + sdist, the `.deb`, a
-zipped web build and a best-effort debug APK, then publishes them all on a
-GitHub Release with generated notes. Keep the tag in step with `version` in
-`pyproject.toml` and `buildozer.spec`.
+`.github/workflows/release.yml`, which builds the wheel + sdist and the `.deb`
+and publishes them on a GitHub Release with generated notes. Keep the tag in
+step with `version` in `pyproject.toml`.
 
 ### Tests
 
@@ -174,10 +139,10 @@ hundred frames — no display or audio needed. It runs on Python 3.10 and 3.12 i
 assets/                  image, sound and theme files (copied from upstream PySyCache)
 src/
 ├── __init__.py
-├── main.py              main menu + activity dispatcher; sync main() + async_main()
+├── main.py              main menu + activity dispatcher (entry point)
 ├── engine.py            window management, asset loading, 800×600 virtual scaling
 └── games/
-    ├── base.py          shared async Activity loop, theme discovery, scoring
+    ├── base.py          shared Activity loop, theme discovery, scoring
     ├── targets.py       shared Click / Double-Click implementation
     ├── move.py          Move activity
     ├── click.py         Click activity
@@ -185,10 +150,8 @@ src/
     ├── drag.py          Drag activity (the "puzzle")
     └── buttons.py       Buttons activity
 tests/test_smoke.py      headless engine + activity smoke test
-main.py                  root entry point for the pygbag (web) and Buildozer (APK) builds
 build-deb.sh             standalone .deb builder (packages src/ + assets/ only)
-buildozer.spec           Android APK config (Buildozer / python-for-android)
-.github/workflows/       ci.yml (smoke test) · web.yml (pygbag → Pages) · android.yml (APK) · release.yml (tag → GitHub Release)
+.github/workflows/       ci.yml (smoke test) · release.yml (tag → GitHub Release)
 pyproject.toml           packaging + dependencies
 LICENSE                  GPL-2.0
 ```

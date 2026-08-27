@@ -12,13 +12,9 @@ never has to think about the window size.
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 
 import pygame
-
-#: Running inside pygbag's WebAssembly runtime (browser) rather than on a desktop.
-IS_WEB = sys.platform == "emscripten"
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -95,13 +91,6 @@ class Engine:
     # Window management
     # ------------------------------------------------------------------
     def _create_window(self, fullscreen: bool) -> pygame.Surface:
-        if IS_WEB:
-            # In the browser: plain 800x600 surface, no flags.  pygbag's HTML
-            # canvas scales itself to the viewport via CSS, and mouse events
-            # already arrive in this coordinate space.  SCALED / RESIZABLE both
-            # misbehave under pygbag's wasm SDL, so don't use them and don't do
-            # our own letter-boxing (see _recompute_layout / present).
-            return pygame.display.set_mode(VIRTUAL_SIZE)
         if fullscreen:
             return pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.SCALED)
         return pygame.display.set_mode(VIRTUAL_SIZE, pygame.RESIZABLE)
@@ -115,18 +104,12 @@ class Engine:
                 pass
 
     def toggle_fullscreen(self) -> None:
-        if IS_WEB:
-            return  # the browser owns the canvas size
         self._fullscreen = not self._fullscreen
         self._window = self._create_window(self._fullscreen)
         self._recompute_layout()
 
     def _recompute_layout(self) -> None:
         """Fit the 800x600 virtual surface into the current window, centred."""
-        if IS_WEB:
-            # The window surface is already 800x600; draw straight onto it.
-            self._blit_rect = pygame.Rect(0, 0, *VIRTUAL_SIZE)
-            return
         win_w, win_h = self._window.get_size()
         scale = min(win_w / VIRTUAL_WIDTH, win_h / VIRTUAL_HEIGHT)
         scaled_w = max(1, int(VIRTUAL_WIDTH * scale))
@@ -207,15 +190,7 @@ class Engine:
         pygame.display.flip()
 
     def tick(self) -> float:
-        """Advance the clock; return the elapsed seconds since the last tick.
-
-        On the web we must *not* cap the frame rate here: ``Clock.tick(fps)``
-        busy-waits, which freezes pygbag's single browser thread after the first
-        frame.  The loop's ``await asyncio.sleep(0)`` hands control back to the
-        browser, which paces us via requestAnimationFrame instead.
-        """
-        if IS_WEB:
-            return self.clock.tick() / 1000.0
+        """Advance the clock (capped at ``self.fps``); return elapsed seconds."""
         return self.clock.tick(self.fps) / 1000.0
 
     # ------------------------------------------------------------------

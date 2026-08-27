@@ -9,7 +9,6 @@ game-loop wiring without a GPU.  Run it with the dummy SDL drivers::
 
 from __future__ import annotations
 
-import asyncio
 import os
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -56,8 +55,8 @@ def test_activity_drives_frames(engine, activity_cls, level):
         activity.next_theme()
 
 
-def test_async_menu_starts_and_quits(monkeypatch):
-    """Run the real async menu loop briefly, then force it to exit."""
+def test_menu_starts_and_quits(monkeypatch):
+    """Run the real menu loop briefly, then force it to exit."""
     from src import main as main_mod
 
     real_engine_cls = main_mod.Engine
@@ -77,6 +76,6 @@ def test_async_menu_starts_and_quits(monkeypatch):
                 self.running = False
 
     monkeypatch.setattr(main_mod, "Engine", _Engine)
-    rc = asyncio.run(main_mod.async_main([]))
+    rc = main_mod.main([])
     assert rc == 0
     assert box["engine"]._frames >= 30

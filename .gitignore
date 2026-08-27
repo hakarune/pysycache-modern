@@ -23,12 +23,6 @@ debian/files
 debian/*.substvars
 debian/*.log
 
-# Web build (pygbag writes into build/, kept above) and Android build (Buildozer)
-.buildozer/
-bin/
-*.apk
-*.aab
-
 # Legacy upstream sources (downloaded on demand, not tracked)
 legacy-sources/
 

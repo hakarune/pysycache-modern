@@ -9,7 +9,6 @@ The loop is deliberately close to the legacy ``ApplicationPysy.Execute`` shape:
 
 from __future__ import annotations
 
-import asyncio
 import random
 from pathlib import Path
 
@@ -109,15 +108,10 @@ class Activity:
     # ------------------------------------------------------------------
     # Main loop
     # ------------------------------------------------------------------
-    async def run(self) -> int:
-        """Play until the child leaves.  Returns the accumulated score.
-
-        This is a coroutine: it yields to the event loop once per frame
-        (``await asyncio.sleep(0)``) so the same loop drives a native desktop
-        run and a pygbag/WebAssembly build in the browser.
-        """
+    def run(self) -> int:
+        """Play until the child leaves.  Returns the accumulated score."""
         engine = self.engine
-        await self._fade_in()
+        self._fade_in()
         self.start_round()
 
         while engine.running and not self.done:
@@ -136,15 +130,13 @@ class Activity:
             if self.is_round_won():
                 self.rounds_completed += 1
                 self.draw(engine.surface)
-                await self._celebrate()
+                self._celebrate()
                 self.start_round()
-                await asyncio.sleep(0)
                 continue
 
             self.draw(engine.surface)
             self._draw_hud(engine.surface)
             engine.present()
-            await asyncio.sleep(0)
 
         engine.stop_music()
         return self.score
@@ -152,7 +144,7 @@ class Activity:
     # ------------------------------------------------------------------
     # Presentation helpers
     # ------------------------------------------------------------------
-    async def _fade_in(self) -> None:
+    def _fade_in(self) -> None:
         """Legacy-style top-to-bottom wipe onto the activity background."""
         engine = self.engine
         engine.play_sound("transition.ogg")
@@ -164,9 +156,8 @@ class Activity:
             engine.surface.blit(target, (0, 0), (0, 0, VIRTUAL_WIDTH, y))
             engine.present()
             engine.tick()
-            await asyncio.sleep(0)
 
-    async def _celebrate(self) -> None:
+    def _celebrate(self) -> None:
         engine = self.engine
         for name in ("youpee.ogg", "yahoo.ogg", "rire.ogg"):
             if engine.load_sound(name) is not None:
@@ -179,7 +170,7 @@ class Activity:
         except FileNotFoundError:
             pass
         engine.present()
-        await asyncio.sleep(1.5)
+        pygame.time.wait(1500)
 
     def _draw_hud(self, surface: pygame.Surface) -> None:
         font = self.engine.font(20)

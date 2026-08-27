@@ -12,7 +12,6 @@ Options
 from __future__ import annotations
 
 import argparse
-import asyncio
 import sys
 
 import pygame
@@ -117,10 +116,10 @@ class Menu:
         return buttons
 
     # ------------------------------------------------------------------
-    async def _play_activity(self, activity_cls) -> None:
+    def _play_activity(self, activity_cls) -> None:
         self.engine.stop_music()
         activity = activity_cls(self.engine, level=self.level)
-        await activity.run()
+        activity.run()
         # Returned to the menu: reset the title and restart the ambient music.
         self.engine.set_cursor_image("souris.png")
         self._start_music()
@@ -128,7 +127,7 @@ class Menu:
     def _start_music(self) -> None:
         self.engine.play_music("sounds", "startup.ogg")
 
-    async def run(self) -> None:
+    def run(self) -> None:
         engine = self.engine
         self._start_music()
 
@@ -146,7 +145,7 @@ class Menu:
                             if kind == "quit":
                                 engine.running = False
                             else:
-                                await self._play_activity(payload)
+                                self._play_activity(payload)
                             break
 
             engine.surface.blit(self.background, (0, 0))
@@ -157,7 +156,6 @@ class Menu:
             for button in self.buttons:
                 button.draw(engine.surface, mouse_pos)
             engine.present()
-            await asyncio.sleep(0)
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -172,14 +170,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-async def async_main(argv: list[str] | None = None) -> int:
-    """Coroutine entry point.
-
-    Used directly by the web build (``main.py`` at the repo root, run through
-    pygbag) and by the Android APK.  Desktop callers go through the sync
-    :func:`main` wrapper below, which is what the ``pysycache-modern`` console
-    script and ``python -m src.main`` invoke.
-    """
+def main(argv: list[str] | None = None) -> int:
+    """Entry point for the ``pysycache-modern`` console script and ``python -m``."""
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
     engine = Engine(
@@ -188,47 +180,10 @@ async def async_main(argv: list[str] | None = None) -> int:
         sound=not args.no_sound,
     )
     try:
-        await _run_menu(engine, LEVELS[args.level])
+        Menu(engine, level=LEVELS[args.level]).run()
     finally:
         engine.quit()
     return 0
-
-
-async def _run_menu(engine: Engine, level: int) -> None:
-    """Build and run the menu, painting any startup failure onto the screen.
-
-    On the desktop a crash just prints a traceback; in the browser it would be a
-    silent blank canvas, so draw the error where it can be read.
-    """
-    try:
-        await Menu(engine, level=level).run()
-    except Exception as exc:  # last-resort visible error reporter
-        import traceback
-
-        tb = traceback.format_exc()
-        print(tb)
-        try:
-            surface = engine.surface
-            surface.fill((120, 0, 0))
-            font = engine.font(18)
-            y = 20
-            for line in (f"{type(exc).__name__}: {exc}".splitlines()
-                         + ["", *tb.splitlines()[-12:]]):
-                surface.blit(font.render(line[:96], True, (255, 255, 255)), (16, y))
-                y += 22
-            for _ in range(240):
-                engine.get_events()
-                engine.present()
-                engine.tick()
-                await asyncio.sleep(0)
-        except Exception:
-            pass
-        raise
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Synchronous entry point for the console script and the .deb launcher."""
-    return asyncio.run(async_main(argv))
 
 
 if __name__ == "__main__":
