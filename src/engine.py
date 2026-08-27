@@ -12,9 +12,13 @@ never has to think about the window size.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pygame
+
+#: Running inside pygbag's WebAssembly runtime (browser) rather than on a desktop.
+IS_WEB = sys.platform == "emscripten"
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -91,6 +95,12 @@ class Engine:
     # Window management
     # ------------------------------------------------------------------
     def _create_window(self, fullscreen: bool) -> pygame.Surface:
+        if IS_WEB:
+            # In the browser the canvas is a fixed size (pygbag's framebuffer,
+            # e.g. 1280x720).  Let SDL scale our 800x600 logical surface onto it
+            # and map the mouse back for us -- do NOT do our own letter-boxing,
+            # pygbag's wasm SDL can't blit into a scaled subsurface.
+            return pygame.display.set_mode(VIRTUAL_SIZE, pygame.SCALED)
         if fullscreen:
             return pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.SCALED)
         return pygame.display.set_mode(VIRTUAL_SIZE, pygame.RESIZABLE)
@@ -104,12 +114,18 @@ class Engine:
                 pass
 
     def toggle_fullscreen(self) -> None:
+        if IS_WEB:
+            return  # the browser owns the canvas; SCALED already fills it
         self._fullscreen = not self._fullscreen
         self._window = self._create_window(self._fullscreen)
         self._recompute_layout()
 
     def _recompute_layout(self) -> None:
         """Fit the 800x600 virtual surface into the current window, centred."""
+        if IS_WEB:
+            # SDL (via SCALED) presents the whole logical surface; no offset.
+            self._blit_rect = pygame.Rect(0, 0, *VIRTUAL_SIZE)
+            return
         win_w, win_h = self._window.get_size()
         scale = min(win_w / VIRTUAL_WIDTH, win_h / VIRTUAL_HEIGHT)
         scaled_w = max(1, int(VIRTUAL_WIDTH * scale))
