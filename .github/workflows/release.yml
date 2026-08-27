@@ -7,6 +7,10 @@ name: Release
 #   * workflow_dispatch       -> same as a tag build (give the tag as input)
 #
 # Assets on every release: wheel + sdist, the standalone .deb, and the web zip.
+#
+# Note: GitHub rewrites '~' to '.' in *release asset filenames*, so a rolling
+# .deb downloads as ...0.1.0.alpha16.<sha>...  The package's internal Version:
+# field keeps the real '0.1.0~alpha16.<sha>' (correct apt prerelease ordering).
 
 on:
   push:
