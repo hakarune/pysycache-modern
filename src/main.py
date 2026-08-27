@@ -12,6 +12,7 @@ Options
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 
 import pygame
@@ -116,10 +117,10 @@ class Menu:
         return buttons
 
     # ------------------------------------------------------------------
-    def _play_activity(self, activity_cls) -> None:
+    async def _play_activity(self, activity_cls) -> None:
         self.engine.stop_music()
         activity = activity_cls(self.engine, level=self.level)
-        activity.run()
+        await activity.run()
         # Returned to the menu: reset the title and restart the ambient music.
         self.engine.set_cursor_image("souris.png")
         self._start_music()
@@ -127,7 +128,7 @@ class Menu:
     def _start_music(self) -> None:
         self.engine.play_music("sounds", "startup.ogg")
 
-    def run(self) -> None:
+    async def run(self) -> None:
         engine = self.engine
         self._start_music()
 
@@ -145,7 +146,7 @@ class Menu:
                             if kind == "quit":
                                 engine.running = False
                             else:
-                                self._play_activity(payload)
+                                await self._play_activity(payload)
                             break
 
             engine.surface.blit(self.background, (0, 0))
@@ -156,6 +157,7 @@ class Menu:
             for button in self.buttons:
                 button.draw(engine.surface, mouse_pos)
             engine.present()
+            await asyncio.sleep(0)
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
@@ -170,7 +172,14 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: list[str] | None = None) -> int:
+async def async_main(argv: list[str] | None = None) -> int:
+    """Coroutine entry point.
+
+    Used directly by the web build (``main.py`` at the repo root, run through
+    pygbag) and by the Android APK.  Desktop callers go through the sync
+    :func:`main` wrapper below, which is what the ``pysycache-modern`` console
+    script and ``python -m src.main`` invoke.
+    """
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
     engine = Engine(
@@ -179,10 +188,15 @@ def main(argv: list[str] | None = None) -> int:
         sound=not args.no_sound,
     )
     try:
-        Menu(engine, level=LEVELS[args.level]).run()
+        await Menu(engine, level=LEVELS[args.level]).run()
     finally:
         engine.quit()
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Synchronous entry point for the console script and the .deb launcher."""
+    return asyncio.run(async_main(argv))
 
 
 if __name__ == "__main__":

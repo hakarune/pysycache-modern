@@ -1,0 +1,36 @@
+name: Android APK (Buildozer)
+
+# Packages the game into a debug .apk with Buildozer / python-for-android and
+# uploads it as a workflow artifact you can download and sideload.
+#
+# Not run on every push (a cold build takes ~30 min): trigger it by hand from
+# the Actions tab, or by pushing a v* tag.
+#
+# This job never touches the desktop run, the wheel, or the .deb.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build debug APK
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android debug
+          buildozer_version: stable
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pysycache-modern-apk
+          path: bin/*.apk
+          if-no-files-found: error

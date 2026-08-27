@@ -33,6 +33,10 @@ dev = [
     "pytest>=7",
     "ruff>=0.4",
 ]
+# Web/WebAssembly build only; unused by the desktop run and the .deb.
+web = [
+    "pygbag>=0.9",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/hakarune/pysycache-modern"
@@ -54,3 +58,7 @@ include-package-data = true
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+extend-exclude = ["legacy-sources", "build"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
