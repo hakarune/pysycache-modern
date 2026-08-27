@@ -180,8 +180,9 @@ export class Engine {
     if (!this._audio) { this._pendingMusic = { rel, opts }; return; }
     this.stopMusic();
     if (this._muted || !rel) return;
+    const tok = (this._musicTok = {});
     const buf = await this._buffer(rel);
-    if (!buf) return;
+    if (this._musicTok !== tok || this._muted || !buf) return; // stopped/superseded while decoding
     const src = this._audio.createBufferSource();
     src.buffer = buf;
     src.loop = loop;
@@ -191,6 +192,7 @@ export class Engine {
   }
 
   stopMusic() {
+    this._musicTok = {}; // invalidates any in-flight music() past its await
     this._pendingMusic = null;
     try { this._musicSrc?.stop(); } catch { /* already stopped */ }
     this._musicSrc = null;
@@ -222,9 +224,21 @@ export class Engine {
   }
 
   _frame(now) {
-    if (!this._crashed) this._raf = requestAnimationFrame(this._frame);
+    this._raf = requestAnimationFrame(this._frame);
     const dt = Math.min(0.05, (now - this._last) / 1000);
     this._last = now;
+
+    // Keep the loop alive after a crash: a resize clears the backing store, so
+    // we must repaint the error each frame or it goes blank again.
+    if (this._crashed) {
+      this._drainEvents();
+      const { ctx } = this;
+      ctx.save();
+      ctx.setTransform(this._sx, 0, 0, this._sy, 0, 0);
+      this._paintCrash(ctx);
+      ctx.restore();
+      return;
+    }
 
     try {
       const events = this._drainEvents();

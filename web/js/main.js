@@ -26,7 +26,7 @@ class Menu {
     this.bg = engine.image("images/fond-menu.png");
     this._build();
     engine.music?.("sounds/startup.ogg", { loop: true });
-    if (typeof window !== "undefined") window.__menu = this; // test/debug hook
+    if (location.search.includes("debug")) window.__menu = this;
   }
 
   _build() {
@@ -111,7 +111,9 @@ async function boot() {
   try { await document.fonts?.load('bold 18px "PySy"'); } catch { /* FOUT is fine */ }
 
   bootEl.classList.add("hidden");
-  const level = new URLSearchParams(location.search).get("level") || "medium";
+  const params = new URLSearchParams(location.search);
+  if (params.has("debug")) window.__engine = engine;
+  const level = params.get("level") || "medium";
   engine.start(new Menu(engine, ["easy", "medium", "hard"].includes(level) ? level : "medium"));
 
   document.getElementById("fs").addEventListener("click", () => {

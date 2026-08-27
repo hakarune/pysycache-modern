@@ -55,9 +55,5 @@ export default {
       3
     ]
   },
-  "SNAP_DISTANCE": 45,
-  "BOARD_W": 520,
-  "BOARD_H": 420,
-  "BOARD_DX": 20,
-  "BOARD_DY": 60
+  "SNAP_DISTANCE": 45
 };

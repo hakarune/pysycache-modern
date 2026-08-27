@@ -53,8 +53,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: node web/tools/build.mjs
-      - run: node web/tools/build.mjs --check
+      - run: node web/tools/build.mjs --check   # committed generated files current
+      - run: node web/tools/build.mjs           # populate web/assets/
       - name: Zip web/
         run: |
           v="${{ github.event.inputs.tag || github.ref_name }}"

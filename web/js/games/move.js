@@ -51,29 +51,41 @@ export class MoveActivity extends Activity {
   }
 
   _reveal(col, row) {
-    if (col < 0 || row < 0 || col >= this.cols || row >= this.rows) return;
-    if (this.revealed[col][row]) return;
+    if (col < 0 || row < 0 || col >= this.cols || row >= this.rows) return false;
+    if (this.revealed[col][row]) return false;
     this.revealed[col][row] = true;
     this.remaining--;
     this.score++;
-    this.engine.sound?.("sounds/pop.wav");
+    return true;
+  }
+
+  _tileAt(x, y) {
+    return this._reveal(
+      Math.floor((x - MARGIN_LEFT) / this.tileW),
+      Math.floor((y - MARGIN_TOP) / this.tileH),
+    );
   }
 
   onPointer(ev) {
     if (ev.type !== "pointermove" && ev.type !== "pointerdown") return;
-    // Walk the segment from the previous point so a fast sweep doesn't skip
-    // tiles between discrete pointer events.
     const from = ev.from || { x: ev.x, y: ev.y };
     const dist = Math.hypot(ev.x - from.x, ev.y - from.y);
-    const steps = Math.max(1, Math.ceil(dist / (Math.min(this.tileW, this.tileH) / 2)));
-    for (let i = 0; i <= steps; i++) {
-      const x = from.x + ((ev.x - from.x) * i) / steps;
-      const y = from.y + ((ev.y - from.y) * i) / steps;
-      this._reveal(
-        Math.floor((x - MARGIN_LEFT) / this.tileW),
-        Math.floor((y - MARGIN_TOP) / this.tileH),
-      );
+    let count = 0;
+    if (dist > 4 * Math.max(this.tileW, this.tileH)) {
+      // pointer jumped (re-entered the canvas, or first move) -- don't draw a
+      // line of tiles the child never swept over
+      count += this._tileAt(ev.x, ev.y) ? 1 : 0;
+    } else {
+      // walk the segment so a fast sweep doesn't skip tiles between events
+      const steps = Math.max(1, Math.ceil(dist / (Math.min(this.tileW, this.tileH) / 2)));
+      for (let i = 0; i <= steps; i++) {
+        count += this._tileAt(
+          from.x + ((ev.x - from.x) * i) / steps,
+          from.y + ((ev.y - from.y) * i) / steps,
+        ) ? 1 : 0;
+      }
     }
+    if (count) this.engine.sound?.("sounds/pop.wav"); // one pop per event, not per tile
   }
 
   isRoundWon() {

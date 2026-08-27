@@ -32,6 +32,9 @@ Run `node web/tools/build.mjs --check` to fail if the committed generated files
 are stale, or if the manifest points at an asset that no longer exists — CI
 does both.
 
+The asset copy compares by size only. If you edit a file in `../assets/`
+*in place* (same size, new content), run `rm -rf web/assets` before rebuilding.
+
 ### Deliberate differences from the Python discovery rules
 
 `build.mjs` mostly mirrors `src/games/base.py:theme_images()` and the per-game

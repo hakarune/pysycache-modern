@@ -27,10 +27,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Generate manifests + assets
-        run: node web/tools/build.mjs
-      - name: Assert generated files are committed
+      - name: Committed generated files are current
         run: node web/tools/build.mjs --check
+      - name: Generate web/assets/
+        run: node web/tools/build.mjs
+      - name: Trim non-runtime files from the site
+        run: rm -rf web/tools web/README.md
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web

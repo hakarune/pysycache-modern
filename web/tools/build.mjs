@@ -100,10 +100,9 @@ function scrapeConstants() {
     BUTTON_MAX_EDGE: scalar(buttons, "BUTTON_MAX_EDGE"),
     DRAG_GRID: levelDict(drag, "GRID"),
     SNAP_DISTANCE: scalar(drag, "SNAP_DISTANCE"),
-    BOARD_W: Number(drag.match(/BOARD_W,\s*BOARD_H\s*=\s*(\d+),\s*(\d+)/)[1]),
-    BOARD_H: Number(drag.match(/BOARD_W,\s*BOARD_H\s*=\s*(\d+),\s*(\d+)/)[2]),
-    BOARD_DX: Number(drag.match(/BOARD_X\s*=\s*MARGIN_LEFT\s*\+\s*(\d+)/)[1]),
-    BOARD_DY: Number(drag.match(/BOARD_Y\s*=\s*MARGIN_TOP\s*\+\s*(\d+)/)[1]),
+    // NB: drag.py's BOARD_W/H (520x420) are deliberately NOT carried over --
+    // they leave no room to scatter pieces at 800x600, so web/js/games/drag.js
+    // uses its own smaller board.
   };
 }
 
