@@ -20,7 +20,9 @@ source.exclude_dirs = tests, legacy-sources, build, bin, dist, .buildozer, .gith
 # Keep in step with pyproject.toml / build-deb.sh by hand.
 version = 0.1.0
 
-requirements = python3, pygame
+# python3 pinned to 3.11: python-for-android otherwise builds CPython 3.14 for
+# Android, which classic pygame fails to compile against (removed longintrepr.h).
+requirements = python3==3.11.9, pygame
 
 orientation = landscape
 fullscreen = 1
