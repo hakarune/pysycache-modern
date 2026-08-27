@@ -32,6 +32,10 @@ bin/
 # Legacy upstream sources (downloaded on demand, not tracked)
 legacy-sources/
 
+# Local scratch: downloaded CI job logs, etc.
+Logs/
+logs/
+
 # Editor / OS
 .idea/
 .vscode/

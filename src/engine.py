@@ -207,7 +207,15 @@ class Engine:
         pygame.display.flip()
 
     def tick(self) -> float:
-        """Advance the clock; return the elapsed seconds since the last tick."""
+        """Advance the clock; return the elapsed seconds since the last tick.
+
+        On the web we must *not* cap the frame rate here: ``Clock.tick(fps)``
+        busy-waits, which freezes pygbag's single browser thread after the first
+        frame.  The loop's ``await asyncio.sleep(0)`` hands control back to the
+        browser, which paces us via requestAnimationFrame instead.
+        """
+        if IS_WEB:
+            return self.clock.tick() / 1000.0
         return self.clock.tick(self.fps) / 1000.0
 
     # ------------------------------------------------------------------
