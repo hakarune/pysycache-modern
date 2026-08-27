@@ -86,7 +86,7 @@ jobs:
           path: ~/.buildozer
           key: buildozer-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-
-      - run: buildozer android debug
+      - run: yes | buildozer android debug
         env:
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       - uses: actions/upload-artifact@v4

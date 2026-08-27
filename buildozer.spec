@@ -30,6 +30,8 @@ android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = 1
 android.api = 34
 android.minapi = 24
+android.build_tools_version = 34.0.0
+android.accept_sdk_license = True
 
 [buildozer]
 log_level = 2
