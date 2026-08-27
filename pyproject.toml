@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pysycache-modern"
+version = "0.1.0"
+description = "Python 3 / pygame-ce port of PySyCache, the mouse-training suite for young children"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-2.0-or-later" }
+authors = [
+    { name = "PySyCache-Modern contributors" },
+]
+keywords = ["education", "children", "mouse", "pygame", "game", "pysycache"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Education",
+    "Topic :: Games/Entertainment",
+]
+
+dependencies = [
+    "pygame-ce>=2.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "ruff>=0.4",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/hakarune/pysycache-modern"
+"Legacy upstream" = "https://sources.debian.org/src/pysycache/"
+
+[project.scripts]
+pysycache-modern = "src.main:main"
+
+[project.gui-scripts]
+pysycache-modern-gui = "src.main:main"
+
+[tool.setuptools]
+packages = ["src", "src.games"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["assets/**/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build / packaging output
+build/
+dist/
+*.deb
+debian/.debhelper/
+debian/pysycache-modern/
+debian/files
+debian/*.substvars
+debian/*.log
+
+# Legacy upstream sources (downloaded on demand, not tracked)
+legacy-sources/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Runtime user data (scores, preferences)
+*.local
+scores/
