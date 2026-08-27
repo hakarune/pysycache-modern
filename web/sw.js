@@ -1,5 +1,9 @@
 // Minimal precache service worker (module type).  The file list and
 // CACHE_VERSION come from web/tools/build.mjs.
+//
+// Module workers need Chrome/Edge 91+ or Firefox 111+.  On older browsers the
+// registration in main.js just rejects (caught and ignored) and the game runs
+// online-only -- fine for the Chromebook target.
 
 import PRECACHE from "./js/sw-precache.generated.js";
 

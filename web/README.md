@@ -29,7 +29,23 @@ discovery/filter rules (`src/games/*.py`) and emits a curated manifest.
 | `assets/**` | copy of every referenced asset (git-ignored; regenerated in CI) |
 
 Run `node web/tools/build.mjs --check` to fail if the committed generated files
-are stale — CI does this.
+are stale, or if the manifest points at an asset that no longer exists — CI
+does both.
+
+### Deliberate differences from the Python discovery rules
+
+`build.mjs` mostly mirrors `src/games/base.py:theme_images()` and the per-game
+filters, but on purpose it does **not**:
+
+- **ship the `-on` / `-off` / `-selected` sprite state variants** — the web game
+  only draws one image per target, and the states are a leftover of the old
+  PySyCache selection UI.
+- **treat `.jpeg` / `.jpg` files in `themes-click` / `themes-dblclick` as
+  targets** — those are full background photos (`themes-click/dinosaurs` has 3,
+  `themes-dblclick/butterfly` has 5), not transparent cut-outs. Only `.png`
+  sprites become targets. The Python game happens to pick these up.
+
+Don't "fix" `build.mjs` to match Python on those two points.
 
 ## Layout
 

@@ -70,7 +70,7 @@ export class TargetActivity extends Activity {
   paint(ctx) {
     for (const t of this.targets) {
       if (t.img) ctx.drawImage(t.img, t.x, t.y, t.w, t.h);
-      else { ctx.fillStyle = "#f05a5a"; ctx.beginPath(); ctx.arc(t.x + t.w / 2, t.y + t.h / 2, t.w / 2, 0, 7); ctx.fill(); }
+      else { ctx.fillStyle = "#f05a5a"; ctx.beginPath(); ctx.arc(t.x + t.w / 2, t.y + t.h / 2, t.w / 2, 0, Math.PI * 2); ctx.fill(); }
     }
   }
 }

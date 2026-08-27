@@ -33,7 +33,7 @@ const GENERATED_HEADER =
 // ---------------------------------------------------------------------------
 const readText = (p) => fs.readFileSync(p, "utf8");
 const listDir = (p) =>
-  fs.existsSync(p) ? fs.readdirSync(p).sort((a, b) => a.localeCompare(b)) : [];
+  fs.existsSync(p) ? fs.readdirSync(p).sort() : [];
 const isFile = (p) => fs.existsSync(p) && fs.statSync(p).isFile();
 const rel = (abs) => path.relative(ASSETS, abs).split(path.sep).join("/");
 const stem = (name) => name.replace(/\.[^.]+$/, "");
@@ -199,7 +199,7 @@ function buildButtons() {
     const byStem = new Map();
     for (const n of themeImages(dir, { excludePrefixes: ["fond", "logo"] })) byStem.set(stem(n), path.join(dir, n));
     const pairs = [];
-    for (const s of [...byStem.keys()].sort((a, b) => a.localeCompare(b))) {
+    for (const s of [...byStem.keys()].sort()) {
       if (s.endsWith("b")) continue;
       pairs.push({
         rest: ref(rel(byStem.get(s))),
@@ -280,25 +280,41 @@ function walkFiles(dir, base = dir) {
   });
 }
 
+function assertReferencedExist() {
+  const missing = [...referenced].filter((r) => !isFile(path.join(ASSETS, r)));
+  if (missing.length) {
+    throw new Error(`manifest references ${missing.length} missing asset(s):\n  ${missing.join("\n  ")}`);
+  }
+}
+
 function copyAssets() {
   let copied = 0;
   for (const r of referenced) {
     const src = path.join(ASSETS, r);
     const dst = path.join(OUT_ASSETS, r);
-    if (!isFile(src)) throw new Error(`manifest references missing asset: ${r}`);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
-    const s = fs.statSync(src);
-    if (!fs.existsSync(dst) || fs.statSync(dst).size !== s.size || fs.statSync(dst).mtimeMs < s.mtimeMs) {
+    if (!fs.existsSync(dst) || fs.statSync(dst).size !== fs.statSync(src).size) {
       fs.copyFileSync(src, dst);
       copied++;
     }
   }
-  // prune files the manifest no longer references
+  // prune files (and now-empty dirs) the manifest no longer references
   let pruned = 0;
   for (const r of walkFiles(OUT_ASSETS)) {
     if (!referenced.has(r)) { fs.rmSync(path.join(OUT_ASSETS, r)); pruned++; }
   }
+  for (const d of walkDirs(OUT_ASSETS).reverse()) {
+    if (fs.existsSync(d) && fs.readdirSync(d).length === 0) fs.rmdirSync(d);
+  }
   return { copied, pruned };
+}
+
+function walkDirs(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir).flatMap((n) => {
+    const p = path.join(dir, n);
+    return fs.statSync(p).isDirectory() ? [p, ...walkDirs(p)] : [];
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -325,6 +341,7 @@ function writeOrCheck(relFile, content, results) {
 function main() {
   const constants = scrapeConstants();
   const manifest = buildManifest(); // fills `referenced`
+  assertReferencedExist();
   const credits = buildCredits();
 
   const assetList = [...referenced].sort().map((r) => `assets/${r}`);

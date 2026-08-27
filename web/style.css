@@ -82,7 +82,8 @@ html, body {
 #credits { right: 52px; font-size: 15px; }
 #fs:hover, #credits:hover, #stage:hover #fs, #stage:hover #credits { opacity: 0.9; }
 
-:fullscreen #game { width: 100vw; height: 100vh; }
+/* In fullscreen the #game rule's min(100vw, 100vh*4/3) already fills the
+   viewport at the correct 4:3 -- do NOT force 100vw/100vh, that squashes it. */
 
 @media (prefers-reduced-motion: reduce) {
   #boot .bar i { transition: none; }

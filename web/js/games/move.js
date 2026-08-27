@@ -24,6 +24,8 @@ export class MoveActivity extends Activity {
     this.rows = Math.floor(PLAY_H / this.tileH);
     this._pic = offscreen(PLAY_W, PLAY_H);
     this._cover = offscreen(PLAY_W, PLAY_H);
+    this.revealed = [];
+    this.remaining = 0;
   }
 
   themeAssetList(data) {
@@ -59,9 +61,19 @@ export class MoveActivity extends Activity {
 
   onPointer(ev) {
     if (ev.type !== "pointermove" && ev.type !== "pointerdown") return;
-    const col = Math.floor((ev.x - MARGIN_LEFT) / this.tileW);
-    const row = Math.floor((ev.y - MARGIN_TOP) / this.tileH);
-    this._reveal(col, row);
+    // Walk the segment from the previous point so a fast sweep doesn't skip
+    // tiles between discrete pointer events.
+    const from = ev.from || { x: ev.x, y: ev.y };
+    const dist = Math.hypot(ev.x - from.x, ev.y - from.y);
+    const steps = Math.max(1, Math.ceil(dist / (Math.min(this.tileW, this.tileH) / 2)));
+    for (let i = 0; i <= steps; i++) {
+      const x = from.x + ((ev.x - from.x) * i) / steps;
+      const y = from.y + ((ev.y - from.y) * i) / steps;
+      this._reveal(
+        Math.floor((x - MARGIN_LEFT) / this.tileW),
+        Math.floor((y - MARGIN_TOP) / this.tileH),
+      );
+    }
   }
 
   isRoundWon() {

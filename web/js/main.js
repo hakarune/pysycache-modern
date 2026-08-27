@@ -3,13 +3,14 @@
 import { ASSETS, Engine, VH, VW } from "./engine.js";
 import { ACTIVITIES } from "./games/index.js";
 
+// face (idle) / hover art per activity.  No Quit entry: a browser tab has no
+// process to exit, and a dead-end "quit" screen is worse than none.
 const MENU_ART = {
   move: ["images/menu-move1.png", "images/menu-move.png"],
   click: ["images/menu-click1.png", "images/menu-click.png"],
   dblclick: ["images/menu-dblclick1.png", "images/menu-dblclick.png"],
   drag: ["images/menu-puzzle1.png", "images/menu-puzzle.png"],
   buttons: ["images/menu-button1.png", "images/menu-button.png"],
-  quit: ["images/menu-quit.png", "images/menu-quitter.png"],
 };
 
 class Menu {
@@ -23,31 +24,34 @@ class Menu {
   enter(engine) {
     engine.setCursor("images/souris.png");
     this.bg = engine.image("images/fond-menu.png");
-    this.title = engine.image("images/logo.png") || engine.image("images/pysycache.png");
     this._build();
     engine.music?.("sounds/startup.ogg", { loop: true });
+    if (typeof window !== "undefined") window.__menu = this; // test/debug hook
   }
 
   _build() {
     const items = ACTIVITIES.map((cls) => ({ key: cls.id, action: () => this._play(cls) }));
-    items.push({ key: "quit", action: () => this._quit() });
 
     this.buttons = items.map((it) => {
       const [faceRel, hoverRel] = MENU_ART[it.key];
       const face = this.engine.image(faceRel);
       const hover = this.engine.image(hoverRel) || face;
-      const w = face?.naturalWidth || 240;
-      const h = face?.naturalHeight || 60;
-      return { ...it, face, hover, w, h, x: 0, y: 0 };
+      return { ...it, face, hover, aspect: (face?.naturalWidth || 1) / (face?.naturalHeight || 1) };
     });
 
-    const gap = 14;
-    const total = this.buttons.reduce((s, b) => s + b.h, 0) + gap * (this.buttons.length - 1);
-    let y = Math.max(150, (VH - total) / 2 + 40);
+    // Vertical column of the (100x100) art, scaled down if needed so the whole
+    // column fits with a comfortable margin top and bottom.
+    const gap = 18;
+    const margin = 40;
+    const n = this.buttons.length;
+    const size = Math.min(100, (VH - 2 * margin - gap * (n - 1)) / n);
+    let y = (VH - (size * n + gap * (n - 1))) / 2;
     for (const b of this.buttons) {
+      b.h = size;
+      b.w = size * b.aspect;
       b.x = (VW - b.w) / 2;
       b.y = y;
-      y += b.h + gap;
+      y += size + gap;
     }
   }
 
@@ -61,11 +65,6 @@ class Menu {
 
   _back() {
     this.engine.setScene(new Menu(this.engine, this.level), { fade: true });
-  }
-
-  _quit() {
-    // No process to exit in a browser; just show a blank calm screen.
-    this.engine.setScene({ render: (ctx) => { ctx.fillStyle = "#0d1b2a"; ctx.fillRect(0, 0, VW, VH); } });
   }
 
   handleEvent(ev) {
@@ -90,7 +89,6 @@ class Menu {
   render(ctx) {
     if (this.bg) ctx.drawImage(this.bg, 0, 0, VW, VH);
     else { ctx.fillStyle = "#19375a"; ctx.fillRect(0, 0, VW, VH); }
-    if (this.title) ctx.drawImage(this.title, (VW - this.title.width) / 2, 24);
     for (const b of this.buttons) {
       const img = b === this._hover ? b.hover : b.face;
       if (img) ctx.drawImage(img, b.x, b.y, b.w, b.h);
@@ -109,7 +107,8 @@ async function boot() {
   await engine.loadImages(core, (done, total) => {
     barEl.style.width = `${Math.round((done / total) * 100)}%`;
   });
-  engine.preloadSounds?.(ASSETS.core.sounds);
+  engine.preloadSounds?.(ASSETS.core.sounds); // warmed up on the first gesture
+  try { await document.fonts?.load('bold 18px "PySy"'); } catch { /* FOUT is fine */ }
 
   bootEl.classList.add("hidden");
   const level = new URLSearchParams(location.search).get("level") || "medium";

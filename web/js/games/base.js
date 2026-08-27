@@ -119,6 +119,9 @@ export class Activity {
     if (bg) ctx.drawImage(bg, 0, 0, VW, VH);
     else { ctx.fillStyle = "#1e3c5a"; ctx.fillRect(0, 0, VW, VH); }
 
+    // enter() loads assets asynchronously; nothing to paint until startRound ran
+    if (this._state === "loading") return;
+
     this.paint(ctx);
     this._drawHUD(ctx);
 
@@ -134,7 +137,7 @@ export class Activity {
   }
 
   _win() {
-    for (const s of ["sounds/youpee.ogg", "sounds/yahoo.ogg", "sounds/rire.ogg"]) { this.engine.sound?.(s); break; }
+    this.engine.sound?.("sounds/youpee.ogg");
     this._state = "celebrate";
     this._t = 0;
   }
