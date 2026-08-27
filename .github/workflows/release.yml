@@ -2,8 +2,9 @@ name: Release
 
 # On a v* tag (or a manual run against an existing tag) build the
 # distributables and attach them to a GitHub Release:
-#   - wheel + sdist   (python -m build)
-#   - standalone .deb  (build-deb.sh)
+#   - wheel + sdist            (python -m build)
+#   - standalone .deb           (build-deb.sh)
+#   - web version zip           (web/tools/build.mjs + zip of web/)
 
 on:
   push:
@@ -45,8 +46,26 @@ jobs:
           name: deb
           path: build/deb/out/*.deb
 
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node web/tools/build.mjs
+      - run: node web/tools/build.mjs --check
+      - name: Zip web/
+        run: |
+          v="${{ github.event.inputs.tag || github.ref_name }}"
+          (cd web && zip -rq "$GITHUB_WORKSPACE/pysycache-modern-web-${v}.zip" . -x 'tools/*' 'README.md')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: pysycache-modern-web-*.zip
+
   publish:
-    needs: [python-dist, deb]
+    needs: [python-dist, deb, web]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

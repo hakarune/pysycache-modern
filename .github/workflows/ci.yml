@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  smoke:
+  python:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -29,3 +29,17 @@ jobs:
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
         run: pytest -v
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Syntax-check every module
+        run: |
+          set -e
+          for f in $(find web -name '*.js' -o -name '*.mjs'); do node --check "$f"; done
+      - name: Generated files are current
+        run: node web/tools/build.mjs --check

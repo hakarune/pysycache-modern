@@ -1,0 +1,89 @@
+@font-face {
+  font-family: "PySy";
+  src: url("./assets/fonts/FreeSansBold.ttf") format("truetype");
+  font-weight: bold;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #0d1b2a;
+  color: #eee;
+  font-family: "PySy", system-ui, sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* Canvas keeps the 4:3 virtual aspect, letter-boxed inside the viewport.
+   The engine sets the backing-store size (DPR-aware); CSS drives layout. */
+#game {
+  display: block;
+  width: min(100vw, calc(100vh * 4 / 3));
+  height: min(100vh, calc(100vw * 3 / 4));
+  background: #000;
+  touch-action: none;
+  cursor: none;
+  image-rendering: auto;
+}
+
+#boot {
+  position: absolute;
+  display: grid;
+  gap: 0.75rem;
+  place-items: center;
+  color: #cfe0f0;
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+#boot.hidden { display: none; }
+#boot .bar {
+  width: 240px;
+  height: 8px;
+  border: 1px solid #4a6b8a;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #12283a;
+}
+#boot .bar i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: #6ea0d8;
+  transition: width 0.15s linear;
+}
+
+#fs, #credits {
+  position: absolute;
+  bottom: 10px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(20, 40, 60, 0.55);
+  color: #cfe0f0;
+  font-size: 18px;
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+#fs { right: 10px; }
+#credits { right: 52px; font-size: 15px; }
+#fs:hover, #credits:hover, #stage:hover #fs, #stage:hover #credits { opacity: 0.9; }
+
+:fullscreen #game { width: 100vw; height: 100vh; }
+
+@media (prefers-reduced-motion: reduce) {
+  #boot .bar i { transition: none; }
+}

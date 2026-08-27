@@ -1,0 +1,16 @@
+{
+  "name": "PySyCache-Modern",
+  "short_name": "PySyCache",
+  "description": "Mouse-training activities for young children -- a Python-3 era remake of PySyCache.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0d1b2a",
+  "theme_color": "#1a3755",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
