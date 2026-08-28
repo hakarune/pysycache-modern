@@ -2,7 +2,7 @@
 // Regenerate with `node web/tools/build.mjs`; CI checks it is current.
 
 export default {
-  "CACHE_VERSION": "6b5f643fe927",
+  "CACHE_VERSION": "263c65eae7c1",
   "FILES": [
     "./",
     "index.html",

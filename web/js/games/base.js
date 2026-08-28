@@ -33,6 +33,17 @@ export function shuffle(a) {
   return a;
 }
 
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 export class Activity {
   // subclasses set these
   static id = "activity";
@@ -51,6 +62,7 @@ export class Activity {
     const cls = this.constructor;
     this.themes = Object.keys(ASSETS.themes[cls.suffix] || {});
     this.themeName = this.themes[0] || null;
+    this.controls = this._buildControls();
   }
 
   get themeData() {
@@ -99,7 +111,51 @@ export class Activity {
       else if (ev.key === "Tab") this._cycleTheme();
       return;
     }
+    if (ev.type === "pointerdown" && ev.button === 0) {
+      const hit = this.controls.find(
+        (b) => ev.x >= b.x && ev.x <= b.x + b.w && ev.y >= b.y && ev.y <= b.y + b.h,
+      );
+      if (hit) {
+        this.engine.sound?.("sounds/btnmenu.wav");
+        if (hit.id === "menu") this.onExit();
+        else this._cycleTheme();
+        return;
+      }
+    }
     if (this._state === "playing") this.onPointer(ev);
+  }
+
+  // On-screen equivalents of the [Esc] / [Tab] keys, for touch devices with
+  // no keyboard.  They sit in the strip below the 720x540 play area, so they
+  // never overlap gameplay; desktop keeps the keyboard shortcuts too.
+  _buildControls() {
+    const W = 120;
+    const H = 48;
+    const GAP = 8;
+    const y = VH - H - 4;
+    const out = [];
+    let x = VW - GAP - W;
+    out.push({ id: "menu", label: "← Menu", x, y, w: W, h: H });
+    if (this.themes.length >= 2) {
+      x -= GAP + W;
+      out.push({ id: "theme", label: "Theme ↻", x, y, w: W, h: H });
+    }
+    return out;
+  }
+
+  _drawControls(ctx) {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = this.engine.font(18);
+    for (const b of this.controls) {
+      ctx.fillStyle = "rgba(20,40,60,0.62)";
+      roundRect(ctx, b.x, b.y, b.w, b.h, 10);
+      ctx.fill();
+      ctx.fillStyle = "#eaf2fb";
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 1);
+    }
+    ctx.restore();
   }
 
   update(dt) {
@@ -120,20 +176,24 @@ export class Activity {
     else { ctx.fillStyle = "#1e3c5a"; ctx.fillRect(0, 0, VW, VH); }
 
     // enter() loads assets asynchronously; nothing to paint until startRound ran
-    if (this._state === "loading") return;
+    if (this._state !== "loading") {
+      this.paint(ctx);
+      this._drawHUD(ctx);
 
-    this.paint(ctx);
-    this._drawHUD(ctx);
+      if (this._state === "intro") {
+        const p = Math.min(1, this._t / 0.35);
+        ctx.fillStyle = "#0d1b2a";
+        ctx.fillRect(0, VH * p, VW, VH * (1 - p));
+      }
+      if (this._state === "celebrate") {
+        const g = this.engine.image("images/gagne.png");
+        if (g) ctx.drawImage(g, (VW - g.width) / 2, (VH - g.height) / 2);
+      }
+    }
 
-    if (this._state === "intro") {
-      const p = Math.min(1, this._t / 0.35);
-      ctx.fillStyle = "#0d1b2a";
-      ctx.fillRect(0, VH * p, VW, VH * (1 - p));
-    }
-    if (this._state === "celebrate") {
-      const g = this.engine.image("images/gagne.png");
-      if (g) ctx.drawImage(g, (VW - g.width) / 2, (VH - g.height) / 2);
-    }
+    // Always on top and always tappable -- a child must be able to leave even
+    // mid-intro or during the win animation.
+    this._drawControls(ctx);
   }
 
   _win() {
@@ -143,7 +203,7 @@ export class Activity {
   }
 
   _drawHUD(ctx) {
-    const txt = `${this.constructor.title}   theme: ${this.themeName || "-"}   score: ${this.score}   [Esc] menu  [Tab] theme`;
+    const txt = `${this.constructor.title}   theme: ${this.themeName || "-"}   score: ${this.score}`;
     ctx.font = this.engine.font(18);
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "rgba(0,0,0,0.65)";

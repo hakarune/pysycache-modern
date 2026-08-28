@@ -21,5 +21,17 @@
     <a id="credits" href="./CREDITS.html" target="_blank" rel="noopener" title="Asset credits">ⓘ</a>
   </main>
   <script type="module" src="./js/main.js"></script>
+  <script>
+    // Plain (non-module) watchdog: if the module never boots, the #boot
+    // spinner would otherwise sit on "Loading…" forever with no explanation.
+    setTimeout(function () {
+      var el = document.getElementById("boot");
+      if (!el || el.classList.contains("hidden") || el.dataset.err) return;
+      var msg = location.protocol === "file:"
+        ? "This page must be served over http:// -- opening the index.html file directly (file://) blocks the game's scripts. Use the GitHub Pages link, or run a local web server in the web/ folder."
+        : "The game didn't start. Reload; if it keeps happening, clear this site's data (an old cached version may be stuck).";
+      el.innerHTML = '<p style="max-width:82vw;color:#ffb3b3;font-size:.85rem;line-height:1.4;text-align:center">' + msg + "</p>";
+    }, 8000);
+  </script>
 </body>
 </html>

@@ -130,4 +130,21 @@ async function boot() {
   }
 }
 
-boot();
+boot().catch((err) => {
+  // Without this a failure here leaves "Loading…" on screen forever with no
+  // clue why.  Show the message where the spinner was.
+  console.error(err);
+  const el = document.getElementById("boot");
+  if (el) {
+    el.dataset.err = "1"; // stop the index.html watchdog from overwriting this
+    el.classList.remove("hidden");
+    el.innerHTML =
+      `<p style="max-width:80vw;color:#ff9a9a;font-size:.9rem;text-align:center">` +
+      `Couldn't start:<br>${String(err && err.message || err).replace(/[<>&]/g, "")}` +
+      `<br><br>Reload the page. If it keeps happening, clear this site's data.</p>`;
+  }
+});
+
+addEventListener("error", (e) => {
+  if (e.filename && /\/js\//.test(e.filename)) console.error("script error:", e.message, e.filename);
+});

@@ -344,8 +344,19 @@ function main() {
   const credits = buildCredits();
 
   const assetList = [...referenced].sort().map((r) => `assets/${r}`);
+  // Fold the hand-written shell sources (JS/CSS/HTML + sw.js) into the cache
+  // key so a code-only change -- not just an asset change -- busts an installed
+  // PWA's precache.  Deterministic, so `--check` stays green after a rebuild.
+  const shellSrc = [
+    "index.html", "style.css", "manifest.webmanifest", "sw.js",
+    "js/main.js", "js/engine.js",
+    "js/games/index.js", "js/games/base.js", "js/games/move.js", "js/games/targets.js",
+    "js/games/click.js", "js/games/dblclick.js", "js/games/drag.js", "js/games/buttons.js",
+  ];
+  const shellHash = createHash("sha1");
+  for (const r of shellSrc) shellHash.update(r).update("\0").update(fs.readFileSync(path.join(WEB, r)));
   const cacheVersion = createHash("sha1")
-    .update(JSON.stringify({ constants, manifest, assetList }))
+    .update(JSON.stringify({ constants, manifest, assetList, shell: shellHash.digest("hex") }))
     .digest("hex")
     .slice(0, 12);
   const precache = {
