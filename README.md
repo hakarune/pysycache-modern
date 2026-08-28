@@ -2,206 +2,134 @@
 
 A **Python 3 / [pygame-ce](https://pyga.me/)** port of
 [**PySyCache**](https://sources.debian.org/src/pysycache/) — the classic
-mouse-training suite for young children (originally by Vincent Deroo, 2005–2007,
+mouse-training suite for young children (Vincent Deroo, 2005–2007,
 GPL-2.0-or-later).
 
-The goal is to keep the gentle, picture-driven activities of the original while
-running on a current Python stack: no Python 2, no legacy pygame 1.x, a resizable
-window with proper scaling, and a clean, importable code base.
+It keeps the gentle, picture-driven activities of the original but runs on a
+current stack: no Python 2, no pygame 1.x, a resizable window with proper
+scaling, and a clean importable code base. A separate
+**[browser version](web/README.md)** (vanilla JS `<canvas>`, no Python) is
+live at **<https://hakarune.github.io/pysycache-modern/>**.
 
 ## Activities
 
-| Activity        | Skill taught            | How to win a round                                   |
-| --------------- | ----------------------- | --------------------------------------------------- |
-| **Move**        | moving the pointer      | sweep the mouse over every tile to uncover the picture |
-| **Click**       | single click            | single-click each themed picture until the board is clear |
-| **Double-Click**| double click            | double-click each picture to collect it             |
-| **Drag**        | drag & drop (the "puzzle")| drag every piece back into its slot               |
-| **Buttons**     | pressing buttons        | click each button once to press it                  |
+| Activity         | Skill              | Win a round by…                                  |
+| ---------------- | ------------------ | ----------------------------------------------- |
+| **Move**         | moving the pointer | sweeping the mouse over every tile to uncover a picture |
+| **Click**        | single click       | single-clicking each themed picture until the board is clear |
+| **Double-Click** | double click       | double-clicking each picture to collect it      |
+| **Drag**         | drag & drop        | dragging every puzzle piece back into its slot  |
+| **Buttons**      | pressing buttons   | clicking each button once                        |
 
-All activities read their artwork from themed folders under `assets/` (animals,
-food, sky, sea, dinosaurs, cartoons, …), the same content shipped with the
-original PySyCache.
+Artwork comes from themed folders under `assets/` (animals, food, sky, sea,
+dinosaurs, cartoons, …) — the same content shipped with the original.
 
-## Installation
+## Install & run
 
 Requires **Python ≥ 3.10**.
 
 ```bash
 git clone https://github.com/hakarune/pysycache-modern.git
 cd pysycache-modern
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e .                                     # pulls in pygame-ce
 
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-
-pip install -e .                   # installs pygame-ce and the console script
+pysycache-modern            # console script
+python -m src.main          # or straight from the checkout
 ```
 
-Then launch it with either:
+Options: `--fullscreen` / `--windowed` (default is an 800×600 window),
+`--no-sound`, `--level {easy,medium,hard}` (default `medium`).
 
-```bash
-pysycache-modern                   # console script (from the install)
-python -m src.main                 # run straight from a checkout
-```
+### On Android (Termux)
 
-### Running on Android (Termux)
-
-The Python game runs on the phone/tablet screen through
+The Python game renders on the device screen through
 [Termux:X11](https://github.com/termux/termux-x11):
 
 ```bash
 pkg install tur-repo && pkg install python-pygame termux-x11-nightly xorg-xdpyinfo
-# install the Termux:X11 companion app from its GitHub "nightly" release
-./run-android.sh                    # starts the X server, opens the app, runs the game
+# also install the Termux:X11 companion app from its GitHub "nightly" release
+./run-android.sh           # starts the X server, opens the app, runs the game
 ```
 
-Touch acts as the mouse (tap = click, drag = drag), which suits a
-mouse-training game fine. For a zero-install option, the
-[web version](web/README.md) also runs in the Android browser.
-
-### Command-line options
-
-| Option                       | Effect                                        |
-| ---------------------------- | --------------------------------------------- |
-| `--fullscreen` / `--windowed`| start full-screen, or in an 800×600 window (default) |
-| `--no-sound`                 | disable the audio mixer                       |
-| `--level {easy,medium,hard}` | difficulty for every activity (default `medium`) |
+Touch acts as the mouse. For a zero-install option, open the
+[web version](https://hakarune.github.io/pysycache-modern/) in the Android
+browser instead.
 
 ## Controls
 
-The whole point is to use the mouse — the keyboard only has a few helpers.
+The point is to use the mouse; the keyboard only has a few helpers.
 
-| Input                         | Action                                             |
-| ----------------------------- | ------------------------------------------------- |
-| **Mouse move**                | Move activity: uncover tiles; everywhere: aim     |
-| **Left click**                | menu: choose an activity / button; in-game: click a target or grab a piece |
-| **Left double-click**         | Double-Click activity: collect a target           |
-| **Left drag** (hold + move)   | Drag activity: carry a puzzle piece               |
-| **Esc**                       | in an activity: back to the menu; in the menu: quit |
-| **Tab**                       | in an activity: switch to the next theme           |
-| **F11**                       | toggle full-screen                                 |
+| Input                       | Action                                                  |
+| --------------------------- | ------------------------------------------------------ |
+| Mouse move                  | Move activity: uncover tiles; elsewhere: aim           |
+| Left click                  | menu: pick an activity; in-game: hit a target or grab a piece |
+| Left double-click           | Double-Click activity: collect a target                |
+| Left drag                   | Drag activity: carry a puzzle piece                    |
+| **Esc**                     | activity → menu; menu → quit                           |
+| **Tab**                     | activity: next theme                                    |
+| **F11**                     | toggle full-screen                                      |
 
-The hardware cursor is hidden; a hand-shaped picture cursor is drawn instead,
-just like the original.
-
-## Dependencies
-
-**Runtime**
-
-- Python ≥ 3.10
-- [`pygame-ce`](https://pypi.org/project/pygame-ce/) ≥ 2.4 (the community
-  edition of pygame; provides `import pygame`)
-
-Installed automatically by `pip install -e .` (see `pyproject.toml`).
-
-**Development (optional)**
-
-```bash
-pip install -e ".[dev]"            # pytest, ruff
-```
-
-**System packages** (for the `.deb`): `python3`, and
-`python3-pygame` **or** `python3-pygame-ce`.
+The hardware cursor is hidden and a hand-shaped picture cursor drawn instead,
+as in the original. The **web version** additionally shows on-screen
+**← Menu** / **Theme ↻** buttons, since phones and tablets have no keyboard.
 
 ## Building
 
-### A wheel / sdist
-
 ```bash
-pip install build
-python -m build                    # writes dist/*.whl and dist/*.tar.gz
+pip install build && python -m build          # wheel + sdist in dist/
+./build-deb.sh [VERSION]                       # standalone .deb (needs only dpkg-deb)
 ```
 
-### A standalone Debian package
+`build-deb.sh` stages `src/` + `assets/` and calls `dpkg-deb` directly (no
+debhelper). Output: `build/deb/out/pysycache-modern_<version>_all.deb`,
+installing the game to `/usr/share/pysycache-modern`, a launcher at
+`/usr/games/pysycache-modern`, and a `.desktop` entry. Install with
+`sudo apt install ./build/deb/out/pysycache-modern_*.deb`.
 
-`build-deb.sh` stages a file tree and calls `dpkg-deb` directly — it does **not**
-need debhelper or a Debian source package.
+**Releases** (`.github/workflows/release.yml`): every push to `main` refreshes a
+rolling **`rolling`** pre-release (alpha, `X.Y.Z~alpha<n>.<sha>`); pushing a
+`v*` tag cuts a stable release named after the tag. Keep the tag in step with
+`version` in `pyproject.toml`.
 
-```bash
-./build-deb.sh                     # version taken from pyproject.toml
-./build-deb.sh 0.2.0               # or pass one explicitly
-```
-
-Output: `build/deb/out/pysycache-modern_<version>_all.deb`, which installs
-
-- the game to `/usr/share/pysycache-modern`
-- a launcher at `/usr/games/pysycache-modern`
-- a menu entry at `/usr/share/applications/pysycache-modern.desktop`
-
-Install it with `sudo apt install ./build/deb/out/pysycache-modern_*.deb`.
-
-### Releases
-
-`.github/workflows/release.yml` builds the wheel + sdist, the standalone `.deb`,
-and a zip of the web version, and publishes them on a GitHub Release:
-
-- **every push to `main`** refreshes a rolling **`rolling`** pre-release
-  (marked *pre-release*, version `X.Y.Z~alpha<n>.<sha>`) — treat it as alpha.
-- **pushing a `v*` tag** (e.g. `git tag v0.1.0 && git push --tags`) cuts a
-  stable release named after the tag, with generated notes. Keep the tag in
-  step with `version` in `pyproject.toml`.
-
-### Tests
+**Tests**:
 
 ```bash
 pip install -e ".[dev]"
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy pytest
 ```
 
-A headless smoke test boots the engine and drives every activity for a couple
-hundred frames — no display or audio needed. It runs on Python 3.10 and 3.12 in
-`.github/workflows/ci.yml`.
+A headless smoke test boots the engine and drives every activity for a few
+hundred frames — no display or audio. CI runs it on Python 3.10 and 3.12.
 
 ## Project layout
 
 ```
-assets/                  image, sound and theme files (copied from upstream PySyCache)
+assets/            image / sound / theme files, vendored from upstream PySyCache
 src/
-├── __init__.py
-├── main.py              main menu + activity dispatcher (entry point)
-├── engine.py            window management, asset loading, 800×600 virtual scaling
-└── games/
-    ├── base.py          shared Activity loop, theme discovery, scoring
-    ├── targets.py       shared Click / Double-Click implementation
-    ├── move.py          Move activity
-    ├── click.py         Click activity
-    ├── dblclick.py      Double-Click activity
-    ├── drag.py          Drag activity (the "puzzle")
-    └── buttons.py       Buttons activity
-tests/test_smoke.py      headless engine + activity smoke test
-build-deb.sh             standalone .deb builder (packages src/ + assets/ only)
-.github/workflows/       ci.yml (smoke test) · release.yml (tag → GitHub Release)
-pyproject.toml           packaging + dependencies
-LICENSE                  GPL-2.0
+├── main.py        main menu + activity dispatcher (entry point)
+├── engine.py      window, asset loading, 800×600 virtual scaling
+└── games/         base.py (shared loop) + move/click/dblclick/drag/buttons + targets.py
+web/               standalone browser port — see web/README.md
+tests/             headless smoke test
+build-deb.sh       standalone .deb builder
+run-android.sh     Termux:X11 launcher
 ```
 
-To refresh the vendored assets from the original source:
-
-```bash
-mkdir -p legacy-sources && cd legacy-sources
-curl -L -o pysycache_3.1.orig.tar.gz \
-  https://snapshot.debian.org/file/2b7bf712baef4dc52a07980c59d8bbff213da2e2
-mkdir -p pysycache-legacy
-tar xzf pysycache_3.1.orig.tar.gz -C pysycache-legacy --strip-components=1
-# then copy pysycache-legacy/pysycache/{images,sounds,fonts,themes-*} into ../assets/
-```
-
-`legacy-sources/` is git-ignored; it is only a local reference copy.
-
-The `themes-puzzle/<theme>/{0,1,2}/` sub-folders from upstream (pre-cut jigsaw
-pieces, `*-modele.png`, `.dfg` layout files) are **not** vendored: the Drag
-activity slices pieces from the full source image at runtime, so those files
-were unused. Copy only the full pictures (`*.png`, `*.jpeg`) plus each theme's
-`credits.txt` / `copyright.html`.
+To re-vendor the upstream assets, download the Debian source tarball for
+`pysycache` (see `pyproject.toml` → *Legacy upstream*) and copy its
+`pysycache/{images,sounds,fonts,themes-*}` into `assets/`. The Drag activity
+slices puzzle pieces at runtime, so the upstream `themes-puzzle/<theme>/{0,1,2}/`
+pre-cut pieces and `.dfg` layout files are not needed — copy only the full
+pictures plus each theme's `credits.txt` / `copyright.html`.
 
 ## License
 
-GPL-2.0-or-later, matching the original PySyCache. See [`LICENSE`](LICENSE).
-Game artwork and sounds are the original PySyCache theme content and carry their
-own per-theme `credits.txt` / `copyright.html` files inside each theme folder.
+GPL-2.0-or-later, matching the original PySyCache — see [`LICENSE`](LICENSE).
+Artwork and sounds are the original PySyCache theme content and carry their own
+per-theme `credits.txt` / `copyright.html`.
 
 ## Credits
 
-- Original **PySyCache** — Vincent Deroo and contributors
-  (<https://sources.debian.org/src/pysycache/>).
+- Original **PySyCache** — Vincent Deroo and contributors.
 - This port — PySyCache-Modern contributors.
