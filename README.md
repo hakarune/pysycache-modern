@@ -44,6 +44,21 @@ pysycache-modern                   # console script (from the install)
 python -m src.main                 # run straight from a checkout
 ```
 
+### Running on Android (Termux)
+
+The Python game runs on the phone/tablet screen through
+[Termux:X11](https://github.com/termux/termux-x11):
+
+```bash
+pkg install tur-repo && pkg install python-pygame termux-x11-nightly xorg-xdpyinfo
+# install the Termux:X11 companion app from its GitHub "nightly" release
+./run-android.sh                    # starts the X server, opens the app, runs the game
+```
+
+Touch acts as the mouse (tap = click, drag = drag), which suits a
+mouse-training game fine. For a zero-install option, the
+[web version](web/README.md) also runs in the Android browser.
+
 ### Command-line options
 
 | Option                       | Effect                                        |
